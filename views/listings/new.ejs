@@ -3,10 +3,10 @@
     <div class="col-8 offset-2">
         <!-- <br><br> -->
     <h3>Create a new Listing</h3>
-    <form method="post" action="/listings">
+    <form method="post" action="/listings" novalidate class="needs-validation">
       <div class="mb-3"> 
         <label for="title" class="form-label">Title</label>
-        <input type="text"placeholder="Add a catchy title" name="listing[title]" class="form-control" />
+        <input type="text"placeholder="Add a catchy title" name="listing[title]" class="form-control"/>
       </div>
    
       <div class="mb-3">
@@ -14,7 +14,8 @@
         <textarea
           name="listing[description]"
           type="text"
-          class="form-control">
+          class="form-control"
+        >
         </textarea>
       </div>
 
