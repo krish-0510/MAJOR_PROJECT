@@ -1,10 +1,10 @@
-body{
-    font-family: "Plus Jankarata Sans",sans-serif !important;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+body {
+  font-family: "Plus Jankarata Sans", sans-serif !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
-.container{
+.container {
   flex: 1;
 }
 
@@ -33,7 +33,7 @@ body{
 }
 
 .f-info-links,
-.f-info-socials ,
+.f-info-socials,
 .f-info-brand {
   width: 100%;
   display: flex;
@@ -63,66 +63,61 @@ body{
   align-items: space-evenly;
 }
 
-
 /* Cards */
 
-.card{
-  border:none !important;
+.card {
+  border: none !important;
   margin-bottom: 2rem;
-  }
-
-.card-img-top
-{
-  border-radius: 1rem !important;
- width: 100% !important;
- object-fit: cover !important;
 }
 
-.card-body{
+.card-img-top {
+  border-radius: 1rem !important;
+  width: 100% !important;
+  object-fit: cover !important;
+}
+
+.card-body {
   padding: 0 !important;
 }
 
-.card-text p{
+.card-text p {
   font-weight: 400;
 }
-.listing-link{
+.listing-link {
   text-decoration: none;
 }
 
 /* Card-Effects */
-.card-img-overlay{
+.card-img-overlay {
   opacity: 0;
 }
-.card-img-overlay:hover{
-  opacity: 0.2 ;
+.card-img-overlay:hover {
+  opacity: 0.2;
   background-color: white;
 }
 
-.add-btn{
+.add-btn {
   background-color: #fe424d !important;
-  border : none !important;
+  border: none !important;
 }
 
 /* Edit Page */
-.edit-btn{
+.edit-btn {
   background-color: #fe424d !important;
-  border : none !important;
+  border: none !important;
 }
 
 /* Show Page */
 
-.show-img{
+.show-img {
   height: 30vh;
-
 }
 
-.btns{
+.btns {
   display: flex;
-
 }
 
-.show-card
-{
-  padding-left:0 ;
+.show-card {
+  padding-left: 0;
   padding-right: 0;
 }

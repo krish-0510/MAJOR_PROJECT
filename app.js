@@ -33,7 +33,7 @@ app.get("/", (req, res) => {
 
 //Index Route..
 app.get("/listings", async (req, res) => {
-  const allListings = await Listing.find({});    // DB Query
+  const allListings = await Listing.find({}); // DB Query
   // res.render("/listings/index.ejs",{allListings});
   res.render("listings/index", { allListings }); // No slash at the start
 });
@@ -73,7 +73,7 @@ app.get("/listings/:id/edit", async (req, res) => {
 app.put("/listings/:id", async (req, res) => {
   let { id } = req.params; // extract the id..
   console.log(req.body);
-  await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
+  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
   res.redirect("/listings");
 });
 
