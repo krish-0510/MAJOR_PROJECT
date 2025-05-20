@@ -8,6 +8,8 @@ const ejsMate = require("ejs-mate");
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
+const { listingSchema } = require("./schema.js");
+const Review = require("./Models/review.js");
 
 main()
   .then(() => {
@@ -33,12 +35,26 @@ app.get("/", (req, res) => {
   res.redirect("/listings");
 });
 
+const validateListing = (req, res, next) => {
+  let { error } = listingSchema.validate(req.body);
+  let errMsg = error.details.map((el) => el.message).join(",");
+  if (error) {
+    throw new ExpressError(404, errMsg);
+  } else {
+    next();
+  }
+  console.log(result);
+};
+
 //Index Route..
-app.get("/listings", async (req, res) => {
-  const allListings = await Listing.find({}); // DB Query
-  // res.render("/listings/index.ejs",{allListings});
-  res.render("listings/index", { allListings }); // No slash at the start
-});
+app.get(
+  "/listings",
+  wrapAsync(async (req, res) => {
+    const allListings = await Listing.find({}); // DB Query
+    // res.render("/listings/index.ejs",{allListings});
+    res.render("listings/index", { allListings }); // No slash at the start
+  })
+);
 
 //New Route..
 app.get("/listings/new", (req, res) => {
@@ -46,11 +62,14 @@ app.get("/listings/new", (req, res) => {
 });
 
 //show route
-app.get("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listings/show.ejs", { listing });
-});
+app.get(
+  "/listings/:id",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    const listing = await Listing.findById(id);
+    res.render("listings/show.ejs", { listing });
+  })
+);
 
 //Create Route..
 app.post(
@@ -65,27 +84,53 @@ app.post(
 );
 
 //Edit Route
-app.get("/listings/:id/edit", async (req, res) => {
-  let { id } = req.params;
-  // console.log(req.params);
-  const listing = await Listing.findById(id);
-  res.render("listings/edit.ejs", { listing });
-});
+app.get(
+  "/listings/:id/edit",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    // console.log(req.params);
+    const listing = await Listing.findById(id);
+    res.render("listings/edit.ejs", { listing });
+  })
+);
 
 //Update Route
-app.put("/listings/:id", async (req, res) => {
-  let { id } = req.params; // extract the id..
-  console.log(req.body);
-  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
-  res.redirect("/listings");
-});
+app.put(
+  "/listings/:id",
+  wrapAsync(async (req, res) => {
+    if (req.body.listings) {
+      throw new ExpressError(400, "Send valid data for listing");
+    }
+    let { id } = req.params; // extract the id..
+    console.log(req.body);
+    let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
+    res.redirect("/listings");
+  })
+);
 
 //Delete Route..
-app.delete("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  let DeleteListing = await Listing.findByIdAndDelete(id);
-  console.log(DeleteListing);
-  res.redirect("/listings");
+app.delete(
+  "/listings/:id",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    let DeleteListing = await Listing.findByIdAndDelete(id);
+    console.log(DeleteListing);
+    res.redirect("/listings");
+  })
+);
+
+// Reviews..
+//In Reviews we r creating post route. And we r creating relavent route..
+app.post("/listings/:id/reviews", async (req, res) => {
+  let listing = await Listing.findById(req.params.id);
+  let newReview = new Review(req.body.review);
+
+  listing.reviews.push(newReview);
+
+  await newReview.save();
+  await listing.save();
+
+ res.redirect(`/listings/${listing._id}`)
 });
 
 // ExpressError
@@ -95,9 +140,9 @@ app.all("*", (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  let { statusCode, message } = err;
-  // res.render("error.ejs");
-  res.status(statusCode).send(message);
+  let { statusCode = 500, message = "Something Went Wrong!" } = err;
+  res.status(statusCode).render("error.ejs", { message });
+  // res.status(statusCode).send(message);
 });
 
 // app.get("/testListing", async (req, res) => {
