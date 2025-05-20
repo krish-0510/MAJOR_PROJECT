@@ -8,7 +8,7 @@ const ejsMate = require("ejs-mate");
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
-const { listingSchema } = require("./schema.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
 const Review = require("./Models/review.js");
 
 main()
@@ -37,6 +37,17 @@ app.get("/", (req, res) => {
 
 const validateListing = (req, res, next) => {
   let { error } = listingSchema.validate(req.body);
+  let errMsg = error.details.map((el) => el.message).join(",");
+  if (error) {
+    throw new ExpressError(404, errMsg);
+  } else {
+    next();
+  }
+  console.log(result);
+};
+
+const validateReview = (req, res, next) => {
+  let { error } = reviewSchema.validate(req.body);
   let errMsg = error.details.map((el) => el.message).join(",");
   if (error) {
     throw new ExpressError(404, errMsg);
@@ -120,18 +131,22 @@ app.delete(
 );
 
 // Reviews..
-//In Reviews we r creating post route. And we r creating relavent route..
-app.post("/listings/:id/reviews", async (req, res) => {
-  let listing = await Listing.findById(req.params.id);
-  let newReview = new Review(req.body.review);
+//In Reviews we r creating post route. And we r creating relevant route..
+app.post(
+  "/listings/:id/reviews",
+  validateReview,
+  wrapAsync(async (req, res) => {
+    let listing = await Listing.findById(req.params.id);
+    let newReview = new Review(req.body.review);
 
-  listing.reviews.push(newReview);
+    listing.reviews.push(newReview);
 
-  await newReview.save();
-  await listing.save();
+    await newReview.save();
+    await listing.save();
 
- res.redirect(`/listings/${listing._id}`)
-});
+    res.redirect(`/listings/${listing._id}`);
+  })
+);
 
 // ExpressError
 
