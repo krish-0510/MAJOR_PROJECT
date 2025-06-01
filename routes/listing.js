@@ -39,7 +39,11 @@ router.get(
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     const listing = await Listing.findById(id).populate("reviews");
-    res.render("listings/show.ejs", { listing });
+    if(!listing){
+      req.flash("error","Listing Dose not exist!");
+      return res.redirect("/listings");
+    }
+  res.render("listings/show", { listing });
   })
 );
 
@@ -49,6 +53,7 @@ router.post(
   wrapAsync(async (req, res, next) => {
     const newlisting = new Listing(req.body.listing);
     await newlisting.save();
+    req.flash("success","New Listing Created!");
     res.redirect("/listings");
     // let { title, description, image, price, location, country } = req.body; // for abstracting variable
     // let listning=req.body.listing;
@@ -76,9 +81,12 @@ router.put(
     let { id } = req.params; // extract the id..
     console.log(req.body);
     let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
+     req.flash("success","Listing Updated!");
     res.redirect("/listings");
   })
 );
+
+
 
 //Delete Route..
 router.delete(
@@ -87,6 +95,7 @@ router.delete(
     let { id } = req.params;
     let DeleteListing = await Listing.findByIdAndDelete(id);
     console.log(DeleteListing);
+     req.flash("success"," Listing Deleted!");
     res.redirect("/listings");
   })
 );
