@@ -1,11 +1,12 @@
 //Resctructuring listings..
 
 const express = require("express");
-const router = express.Router({mergeParams:true});
+const router = express.Router({ mergeParams: true });
 const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
 const { listingSchema } = require("../schema.js");
 const Listing = require("../Models/listing.js");
+const { isLoggedIn } = require("../middleware.js");
 
 const validateListing = (req, res, next) => {
   let { error } = listingSchema.validate(req.body);
@@ -29,7 +30,7 @@ router.get(
 );
 
 //New Route..
-router.get("/new", (req, res) => {
+router.get("/new", isLoggedIn, (req, res) => {
   res.render("listings/new.ejs");
 });
 
@@ -38,22 +39,27 @@ router.get(
   "/:id",
   wrapAsync(async (req, res) => {
     let { id } = req.params;
-    const listing = await Listing.findById(id).populate("reviews");
-    if(!listing){
-      req.flash("error","Listing Dose not exist!");
+    const listing = await Listing.findById(id)
+      .populate("reviews")
+      .populate("owner");
+    if (!listing) {
+      req.flash("error", "Listing Dose not exist!");
       return res.redirect("/listings");
     }
-  res.render("listings/show", { listing });
+    console.log(listing);
+    res.render("listings/show", { listing, currUser: req.user });
   })
 );
 
 //Create Route..
 router.post(
   "/",
+  isLoggedIn,
   wrapAsync(async (req, res, next) => {
-    const newlisting = new Listing(req.body.listing);
-    await newlisting.save();
-    req.flash("success","New Listing Created!");
+    const newListing = new Listing(req.body.listing);
+    newListing.owner = req.user._id;
+    await newListing.save();
+    req.flash("success", "New Listing Created!");
     res.redirect("/listings");
     // let { title, description, image, price, location, country } = req.body; // for abstracting variable
     // let listning=req.body.listing;
@@ -63,6 +69,7 @@ router.post(
 //Edit Route
 router.get(
   "/:id/edit",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     // console.log(req.params);
@@ -74,28 +81,35 @@ router.get(
 //Update Route
 router.put(
   "/:id",
+  isLoggedIn,
+  validateListing,
   wrapAsync(async (req, res) => {
+    
     if (req.body.listings) {
       throw new ExpressError(400, "Send valid data for listing");
     }
-    let { id } = req.params; // extract the id..
+   
+    let listing = await Listing.findById(id);
+    if(!listing.owner.equals(req.user._id)){
+         req.flash("err","You Don't have permission to edit");
+         res.redirect(`/listings/${id}`)
+    }
     console.log(req.body);
-    let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
-     req.flash("success","Listing Updated!");
+    await Listing.findByIdAndUpdate(id, { ...req.body.listing }); //this method passed in updated value..
+    req.flash("success", "Listing Updated!");
     res.redirect("/listings");
   })
 );
 
-
-
 //Delete Route..
 router.delete(
   "/:id",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     let DeleteListing = await Listing.findByIdAndDelete(id);
     console.log(DeleteListing);
-     req.flash("success"," Listing Deleted!");
+    req.flash("success", " Listing Deleted!");
     res.redirect("/listings");
   })
 );
