@@ -1,3 +1,9 @@
+const Listing = require("./Models/listing");
+const Review = require("./Models/review");
+const wrapAsync = require("./utils/wrapAsync");
+const ExpressError = require("./utils/ExpressError.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
+
 module.exports.isLoggedIn = (req, res, next) => {
   if (!req.isAuthenticated()) {
     //redirectUrl save
@@ -14,3 +20,50 @@ module.exports.saveRedirectUrl = (req, res, next) => {
   }
   next();
 };
+
+module.exports.isOwner = wrapAsync(async (req, res, next) => {
+  let { id } = req.params;
+  let listing = await Listing.findById(id).populate("owner");
+  console.log("Listing:", listing);
+  console.log("Listing.owner:", listing?.owner);
+  console.log("res.locals.currUser:", res.locals?.currUser);
+  //Check if owner property exists and then compare..
+  if (!listing.owner._id.equals(res.locals.currUser._id)) {
+    req.flash("error", "You  do not have permissiom to edit");
+    return res.redirect(`/listings/${id}`);
+  }
+  next();
+});
+
+module.exports.validateListing = (req, res, next) => {
+  const { error } = listingSchema.validate(req.body);
+  if (error) {
+    // error.details safe to access only if error exists
+    const errMsg = error.details.map((el) => el.message).join(", ");
+    throw new ExpressError(404, errMsg);
+  } else {
+    next();
+  }
+};
+
+module.exports.validateReview = (req, res, next) => {
+  let { error } = reviewSchema.validate(req.body);
+  if (error) {
+    let errMsg = error.details.map((el) => el.message).join(",");
+    throw new ExpressError(404, errMsg);
+  } else {
+    next();
+  }
+};
+
+module.exports.isReviewAuthor = wrapAsync(async (req, res, next) => {
+  let { id, reviewId } = req.params;
+  let review = await Review.findById(reviewId);
+  //Check if owner property exists and then compare...
+  if (!review || !review.author || !review.author.equals(req.currUser._id)) { 
+    // handle error or unauthorized access
+    req.flash("error", "You are not the author of this review");
+    return res.redirect(`/listings/${id}`);
+  }
+  next();
+});

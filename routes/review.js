@@ -2,32 +2,26 @@ const express = require("express");
 const router = express.Router({mergeParams:true}); // To merge the Parent and child..route.. for using another file
 const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
-const { reviewSchema } = require("../schema.js");
 const Review = require("../Models/review.js");
 const Listing = require("../Models/listing.js");
-
-const validateReview = (req, res, next) => {
-  let { error } = reviewSchema.validate(req.body);
-  if (error) {
-    let errMsg = error.details.map((el) => el.message).join(",");
-    throw new ExpressError(404, errMsg);
-  } else {
-    next();
-  }
-};
+const {validateReview, isLoggedIn,isReviewAuthor} =require("../middleware.js");
 
 
 
-// Reviews..
+
+
+// Post Reviews..
 //In Reviews we r creating post route. And we r creating relevant route..
 router.post(
   "/",
+  isLoggedIn,
   validateReview,
   wrapAsync(async (req, res) => {
     // console.log(req.params.id);  To check the Value is Define or not..
     let listing = await Listing.findById(req.params.id);
     let newReview = new Review(req.body.review);
-
+    newReview.author=req.user._id;
+    console.log(newReview);
     listing.reviews.push(newReview);
 
     await newReview.save();
@@ -40,6 +34,8 @@ router.post(
 //Delete  review Route
 router.delete(
   "/:reviewId",
+  isLoggedIn,
+  isReviewAuthor,
   wrapAsync(async (req, res) => {
     let { id, reviewId } = req.params;
 
@@ -51,3 +47,4 @@ router.delete(
 );
 
 module.exports = router;
+

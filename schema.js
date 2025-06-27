@@ -8,7 +8,10 @@ module.exports.listingSchema = Joi.object({
     description: Joi.string().required(),
     country: Joi.string().required(),
     price: Joi.number().required().min(0),
-    image: Joi.string().uri().optional(),
+   image: Joi.object({
+      url: Joi.string().uri().required()
+    }).required(),
+    location: Joi.string().required() 
   }).required(),
 });
 
@@ -19,10 +22,3 @@ module.exports.reviewSchema = Joi.object({
   }).required(),
 });
 
-
-let { id } = req.params; // extract the id..
-    let listing = await Listing.findById(id);
-    if(!listing.owner.equals(req.user._id)){
-         req.flash("err","You Don't have permission to edit");
-         res.redirect(`/listings/${id}`)
-    }
