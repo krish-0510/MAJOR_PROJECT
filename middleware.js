@@ -24,10 +24,8 @@ module.exports.saveRedirectUrl = (req, res, next) => {
 module.exports.isOwner = wrapAsync(async (req, res, next) => {
   let { id } = req.params;
   let listing = await Listing.findById(id).populate("owner");
-  console.log("Listing:", listing);
-  console.log("Listing.owner:", listing?.owner);
-  console.log("res.locals.currUser:", res.locals?.currUser);
   //Check if owner property exists and then compare..
+
   if (!listing.owner._id.equals(res.locals.currUser._id)) {
     req.flash("error", "You  do not have permissiom to edit");
     return res.redirect(`/listings/${id}`);
@@ -60,7 +58,7 @@ module.exports.isReviewAuthor = wrapAsync(async (req, res, next) => {
   let { id, reviewId } = req.params;
   let review = await Review.findById(reviewId);
   //Check if owner property exists and then compare...
-  if (!review || !review.author || !review.author.equals(req.currUser._id)) { 
+  if (!review || !review.author || !review.author.equals(req.currUser._id)) {
     // handle error or unauthorized access
     req.flash("error", "You are not the author of this review");
     return res.redirect(`/listings/${id}`);
